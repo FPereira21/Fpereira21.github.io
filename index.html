@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPN Barcode Generator (66x40mm)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        /* 66mm x 40mm ratio is 1.65:1 */
+        .barcode-card {
+            width: 100%;
+            aspect-ratio: 66 / 40;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body { background: white; }
+            .preview-grid { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 10px;
+            }
+            .barcode-card { 
+                break-inside: avoid; 
+                border: 1px solid #eee;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div class="max-w-5xl mx-auto p-6 md:p-12">
+        <header class="mb-8 no-print">
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900">LPN Barcode Generator</h1>
+            <p class="text-slate-500 mt-2">Format: 66mm x 40mm ratio</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar / Input -->
+            <div class="lg:col-span-1 space-y-4 no-print">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">LPN Codes</label>
+                        <textarea 
+                            id="lpnInput" 
+                            class="w-full h-64 p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none font-mono text-xs"
+                            placeholder="LPN001&#10;LPN002"
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-sm font-semibold">Barcode Height</label>
+                            <span id="heightValue" class="text-xs text-slate-500 font-mono">120</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            id="heightInput" 
+                            min="40" 
+                            max="160" 
+                            value="120" 
+                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
+                        >
+                    </div>
+                </div>
+                
+                <button 
+                    id="generateBtn"
+                    class="w-full py-3 px-4 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors shadow-lg active:scale-[0.98]"
+                >
+                    Update Preview
+                </button>
+
+                <button 
+                    id="downloadAllBtn"
+                    class="w-full py-3 px-4 bg-white text-slate-900 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                >
+                    Download ZIP
+                </button>
+
+                <div class="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                    <p class="text-[11px] text-blue-800 leading-relaxed">
+                        Adjust height to fit your labels. Changes reflect in the ZIP export automatically.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Preview Area -->
+            <div class="lg:col-span-3">
+                <div id="previewContainer" class="preview-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden canvas for high-res exports (660px x 400px) -->
+    <canvas id="hiddenCanvas" width="660" height="400" style="display:none;"></canvas>
+
+    <script>
+        const lpnInput = document.getElementById('lpnInput');
+        const heightInput = document.getElementById('heightInput');
+        const heightValue = document.getElementById('heightValue');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
+        const previewContainer = document.getElementById('previewContainer');
+        const hiddenCanvas = document.getElementById('hiddenCanvas');
+
+        function generateBarcodes() {
+            const lines = lpnInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            const currentHeight = parseInt(heightInput.value);
+            heightValue.innerText = currentHeight;
+            
+            if (lines.length === 0) {
+                previewContainer.innerHTML = `<div class="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-xl bg-white no-print text-slate-400">Paste LPNs to generate</div>`;
+                downloadAllBtn.disabled = true;
+                return;
+            }
+
+            previewContainer.innerHTML = '';
+            downloadAllBtn.disabled = false;
+
+            lines.forEach((code, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'barcode-card shadow-sm';
+                
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.style.maxWidth = "90%";
+                svg.style.height = "auto";
+                wrapper.appendChild(svg);
+                
+                previewContainer.appendChild(wrapper);
+
+                try {
+                    JsBarcode(svg, code, {
+                        format: "CODE128",
+                        width: 2,
+                        height: currentHeight,
+                        displayValue: true,
+                        fontSize: 16,
+                        margin: 10,
+                        background: "transparent"
+                    });
+                } catch (e) {
+                    wrapper.innerHTML = `<p class="text-red-500 text-xs">Invalid: ${code}</p>`;
+                }
+            });
+        }
+
+        async function downloadAll() {
+            const lines = lpnInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            if (lines.length === 0) return;
+
+            const zip = new JSZip();
+            const originalText = downloadAllBtn.innerText;
+            const currentHeight = parseInt(heightInput.value);
+            
+            // Scaling height for the higher resolution export canvas
+            const exportHeight = Math.floor(currentHeight * 2.3);
+
+            downloadAllBtn.innerText = "Zipping...";
+            downloadAllBtn.disabled = true;
+
+            for (const code of lines) {
+                const ctx = hiddenCanvas.getContext('2d');
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
+
+                try {
+                    JsBarcode(hiddenCanvas, code, {
+                        format: "CODE128",
+                        width: 3,
+                        height: exportHeight,
+                        displayValue: true,
+                        fontSize: 32,
+                        margin: 20
+                    });
+
+                    const dataUrl = hiddenCanvas.toDataURL("image/png");
+                    const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+                    zip.file(`${code}.png`, base64Data, {base64: true});
+                } catch (e) {
+                    console.error("Error generating " + code, e);
+                }
+            }
+
+            const content = await zip.generateAsync({type: "blob"});
+            const url = window.URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "lpn_66x40mm_barcodes.zip";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            downloadAllBtn.innerText = originalText;
+            downloadAllBtn.disabled = false;
+        }
+
+        // Real-time update on slider move
+        heightInput.addEventListener('input', () => {
+            heightValue.innerText = heightInput.value;
+            generateBarcodes();
+        });
+
+        generateBtn.addEventListener('click', generateBarcodes);
+        downloadAllBtn.addEventListener('click', downloadAll);
+
+        lpnInput.value = "LPN-10001\nLPN-10002\nLPN-10003";
+        generateBarcodes();
+    </script>
+</body>
+</html>
