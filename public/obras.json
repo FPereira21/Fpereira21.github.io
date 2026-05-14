@@ -1,0 +1,9 @@
+[
+  {
+    "id": "OB-001",
+    "nombre": "Edificio Horizonte",
+    "direccion": "Av. Libertador 1850"
+  },
+  { "id": "OB-002", "nombre": "Torre Cero", "direccion": "Bv. Artigas 1123" },
+  { "id": "OB-003", "nombre": "Complejo Parque", "direccion": "Sarmiento 2250" }
+]

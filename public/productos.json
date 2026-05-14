@@ -1,0 +1,58 @@
+[
+  {
+    "id": "P1",
+    "nombre": "Cemento Portland Ancap",
+    "precio": 450,
+    "unidad": "Bolsa 25kg",
+    "categoria": "Materiales Básicos"
+  },
+  {
+    "id": "P2",
+    "nombre": "Arena Gruesa",
+    "precio": 1200,
+    "unidad": "Metro Cúbico",
+    "categoria": "Áridos"
+  },
+  {
+    "id": "P3",
+    "nombre": "Varilla Hierro 10mm",
+    "precio": 380,
+    "unidad": "Unidad (12m)",
+    "categoria": "Hierros"
+  },
+  {
+    "id": "P4",
+    "nombre": "Ladrillo de Campo",
+    "precio": 12,
+    "unidad": "Unidad",
+    "categoria": "Materiales Básicos"
+  },
+  {
+    "id": "P5",
+    "nombre": "Pintura Látex Blanca",
+    "precio": 3500,
+    "unidad": "Tacho 20L",
+    "categoria": "Terminaciones"
+  },
+  {
+    "id": "P6",
+    "nombre": "Bloque de Hormigón",
+    "precio": 45,
+    "unidad": "Unidad",
+    "categoria": "Materiales Básicos"
+  },
+  {
+    "id": "P7",
+    "nombre": "Clavos 2.5 pulgadas",
+    "precio": 250,
+    "unidad": "Kilo",
+    "categoria": "Ferretería"
+  },
+  {
+    "id": "P8",
+    "nombre": "Alambre de Fardo",
+    "precio": 180,
+    "unidad": "Kilo",
+    "categoria": "Ferretería"
+  }
+]
